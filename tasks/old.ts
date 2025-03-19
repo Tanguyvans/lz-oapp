@@ -26,8 +26,8 @@ export default task('sendMessage', 'Send a message to the destination chain')
     console.log('- Destination:', dstNetwork || 'unknown network', `(EID: ${dstEid})`);
     console.log('- Message:', message);
 
-    const myOApp = await hre.deployments.get('FlowContract');
-    const contract = await hre.ethers.getContractAt('FlowContract', myOApp.address, signer);
+    const myOApp = await hre.deployments.get('MyOApp');
+    const contract = await hre.ethers.getContractAt('MyOApp', myOApp.address, signer);
 
     // Add executor options with gas limit
     const options = Options.newOptions().addExecutorLzReceiveOption(200000, 0).toBytes();

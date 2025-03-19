@@ -4,12 +4,12 @@ import type { OAppOmniGraphHardhat, OmniPointHardhat } from '@layerzerolabs/tool
 
 const sepoliaContract: OmniPointHardhat = {
     eid: EndpointId.SEPOLIA_V2_TESTNET,
-    contractName: 'MyOApp',
+    contractName: 'SepoliaContract',  // Changed from 'MyOApp'
 }
 
 const flowContract: OmniPointHardhat = {
     eid: EndpointId.FLOW_V2_TESTNET,
-    contractName: 'MyOApp',
+    contractName: 'FlowContract',  // Changed from 'MyOApp'
 }
 
 const config: OAppOmniGraphHardhat = {

@@ -9,6 +9,7 @@ import 'hardhat-deploy'
 import 'hardhat-contract-sizer'
 import '@nomiclabs/hardhat-ethers'
 import '@layerzerolabs/toolbox-hardhat'
+import '@nomiclabs/hardhat-etherscan'
 
 import { HardhatUserConfig, HttpNetworkAccountsUserConfig } from 'hardhat/types'
 
