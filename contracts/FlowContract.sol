@@ -70,6 +70,16 @@ contract FlowContract is OApp, OAppOptionsType3 {
         uint256 optionCount;
     }
 
+    // Add this struct to parse received market data
+    struct ReceivedMarketData {
+        uint256 marketId;
+        int256 outcome;
+        bool resolved;
+    }
+
+    // Add an event to track market data received from Sepolia
+    event MarketDataReceived(uint256 marketId, int256 outcome);
+
     // Events
     event AdminAdded(address indexed admin);
     event AdminRemoved(address indexed admin);
@@ -480,23 +490,172 @@ contract FlowContract is OApp, OAppOptionsType3 {
 
     /**
      * @dev Internal function override to handle incoming messages from another chain.
-     * @dev _origin A struct containing information about the message sender.
-     * @dev _guid A unique global packet identifier for the message.
-     * @param payload The encoded message payload being received.
-     *
-     * @dev The following params are unused in the current implementation of the OApp.
-     * @dev _executor The address of the Executor responsible for processing the message.
-     * @dev _extraData Arbitrary data appended by the Executor to the message.
-     *
-     * Decodes the received payload and processes it as per the business logic defined in the function.
+     * Parses the market data sent from Sepolia and updates the local market's status.
      */
     function _lzReceive(
-        Origin calldata /*_origin*/,
+        Origin calldata _origin,
         bytes32 /*_guid*/,
         bytes calldata payload,
         address /*_executor*/,
         bytes calldata /*_extraData*/
     ) internal override {
+        // Store the raw data
         data = abi.decode(payload, (string));
+        
+        // Try to parse as market data
+        ReceivedMarketData memory marketData = parseMarketData(data);
+        
+        // If valid market data was received
+        if (marketData.marketId > 0 && marketData.resolved) {
+            // Make sure market exists in our system
+            require(
+                marketData.marketId <= marketCount && 
+                markets[marketData.marketId].expirationDate > 0,
+                "Market not found"
+            );
+            
+            // Update the market with outcome
+            Market storage market = markets[marketData.marketId];
+            market.isResolved = true;
+            market.outcome = marketData.outcome;
+            
+            emit MarketResolved(marketData.marketId, marketData.outcome >= 0);
+            emit MarketDataReceived(marketData.marketId, marketData.outcome);
+        }
+    }
+    
+    /**
+     * @notice Parses market data from JSON string received from Sepolia
+     * @param jsonData The JSON string with market data
+     * @return parsed The parsed market data
+     */
+    function parseMarketData(string memory jsonData) internal pure returns (ReceivedMarketData memory parsed) {
+        // Initialize with default values
+        parsed.marketId = 0;
+        parsed.outcome = -1;
+        parsed.resolved = false;
+        
+        // Simple JSON parsing - assumes exact format from Sepolia: {"marketId":X,"outcome":Y,"resolved":true}
+        
+        bytes memory data = bytes(jsonData);
+        
+        // Check if data is too short to be valid JSON
+        if (data.length < 10) return parsed;
+        
+        // Find the marketId part
+        uint256 marketIdPos = findPosition(data, "marketId");
+        if (marketIdPos == 0) return parsed;
+        
+        // Find the outcome part
+        uint256 outcomePos = findPosition(data, "outcome");
+        if (outcomePos == 0) return parsed;
+        
+        // Find the resolved part
+        uint256 resolvedPos = findPosition(data, "resolved");
+        if (resolvedPos == 0) return parsed;
+        
+        // Extract values
+        parsed.marketId = parseUint(extractValue(data, marketIdPos));
+        parsed.outcome = parseInt(extractValue(data, outcomePos));
+        parsed.resolved = compareStrings(extractValue(data, resolvedPos), "true");
+        
+        return parsed;
+    }
+    
+    /**
+     * @notice Finds the position of a key in a JSON string
+     */
+    function findPosition(bytes memory data, string memory key) internal pure returns (uint256) {
+        bytes memory searchKey = abi.encodePacked('"', key, '":');
+        
+        for (uint256 i = 0; i < data.length - searchKey.length; i++) {
+            bool found = true;
+            for (uint256 j = 0; j < searchKey.length; j++) {
+                if (data[i + j] != searchKey[j]) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) {
+                return i + searchKey.length;
+            }
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * @notice Extracts a value from a position in JSON data
+     */
+    function extractValue(bytes memory data, uint256 pos) internal pure returns (string memory) {
+        uint256 endPos = pos;
+        
+        // Find the end of the value (comma or closing brace)
+        while (endPos < data.length) {
+            if (data[endPos] == ',' || data[endPos] == '}') {
+                break;
+            }
+            endPos++;
+        }
+        
+        // Extract the substring
+        bytes memory valueBytes = new bytes(endPos - pos);
+        for (uint256 i = 0; i < endPos - pos; i++) {
+            valueBytes[i] = data[pos + i];
+        }
+        
+        return string(valueBytes);
+    }
+    
+    /**
+     * @notice Parse a string to uint
+     */
+    function parseUint(string memory s) internal pure returns (uint256) {
+        bytes memory b = bytes(s);
+        uint256 result = 0;
+        
+        for (uint256 i = 0; i < b.length; i++) {
+            uint8 c = uint8(b[i]);
+            if (c >= 48 && c <= 57) {
+                result = result * 10 + (c - 48);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * @notice Parse a string to int (supports negative values)
+     */
+    function parseInt(string memory s) internal pure returns (int256) {
+        bytes memory b = bytes(s);
+        bool negative = false;
+        uint256 start = 0;
+        
+        if (b.length > 0 && b[0] == '-') {
+            negative = true;
+            start = 1;
+        }
+        
+        int256 result = 0;
+        for (uint256 i = start; i < b.length; i++) {
+            uint8 c = uint8(b[i]);
+            if (c >= 48 && c <= 57) {
+                result = result * 10 + int256(uint256(c - 48));
+            }
+        }
+        
+        if (negative) {
+            result = -result;
+        }
+        
+        return result;
+    }
+    
+    /**
+     * @notice Compare two strings
+     */
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 }

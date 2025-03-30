@@ -115,23 +115,21 @@ npx hardhat sendMessage --network sepolia-testnet --dst-network flow-testnet --m
 
 npx hardhat sendMessage --network flow-testnet --dst-network sepolia-testnet --message "Hello Omnichain World (sent from Flow)"
 
-npx hardhat verify --network sepolia-testnet 0x962abA481752e6736c2A4D9B864742Bbb54E7F1d 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network sepolia-testnet 0xb80f4395aA198f48567763f2e9789505c05F45F4 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
 contract, endpoint, deployer
-npx hardhat verify --network flow-testnet 0xf988383C6f361eE94Ae22abB088e9027AaedB73A 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network flow-testnet 0x3dFfbb5cbd7d324277D0e4f4F0dE4F07275b1ab5 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
-npx hardhat verify --network sepolia-testnet --contract "contracts/SepoliaContract.sol:SepoliaContract" 0x962abA481752e6736c2A4D9B864742Bbb54E7F1d 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network sepolia-testnet --contract "contracts/SepoliaContract.sol:SepoliaContract" 0xb80f4395aA198f48567763f2e9789505c05F45F4 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
-npx hardhat verify --network flow-testnet --contract "contracts/FlowContract.sol:FlowContract" 0xf988383C6f361eE94Ae22abB088e9027AaedB73A 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
-
-# FLOW
-
-npx hardhat run scripts/debugCreateMarket.ts --network flow-testnet
-npx hardhat request-settlement --market-id 2 --dst-network sepolia --network flow-testnet
-
-# SEPOLIA
+npx hardhat verify --network flow-testnet --contract "contracts/FlowContract.sol:FlowContract" 0x3dFfbb5cbd7d324277D0e4f4F0dE4F07275b1ab5 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
 npx hardhat run scripts/createDualMarket.ts
 npx hardhat run scripts/placeBet.ts
 npx hardhat run scripts/checkBets.ts
-MARKET_ID=1 npx hardhat run scripts/requestMarketSettlement.ts
+MARKET_ID=2 npx hardhat run scripts/requestMarketSettlement.ts
+
+npx hardhat run scripts/settleMarket.ts --network sepolia-testnet
+npx hardhat run scripts/sendMarketToFlow.ts --network sepolia-testnet
+
+npx hardhat run scripts/checkFlowMarket.ts --network flow-testnet

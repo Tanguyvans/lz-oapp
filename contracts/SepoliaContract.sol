@@ -290,4 +290,90 @@ contract SepoliaContract is OApp, OAppOptionsType3 {
     function getWETHBalance() external view returns (uint256) {
         return weth.balanceOf(address(this));
     }
+
+    /**
+     * @notice Sends a market result to Flow network
+     * @param marketId The ID of the market to send
+     * @return receipt The messaging receipt
+     */
+    function sendMarketResult(uint256 marketId) external payable returns (MessagingReceipt memory receipt) {
+        Market storage market = markets[marketId];
+        require(market.exists, "Market does not exist");
+        require(market.isResolved, "Market not yet resolved");
+        
+        // Format the market data as JSON string for sending to Flow
+        string memory marketData = formatMarketForMessage(marketId, market.outcome);
+        
+        // Send the formatted market data to Flow
+        receipt = _lzSend(
+            flowEndpointId, 
+            abi.encode(marketData),
+            new bytes(0), // Default empty options
+            MessagingFee(msg.value, 0),
+            payable(msg.sender)
+        );
+        
+        emit ResultSent(marketId, market.outcome, flowEndpointId);
+        
+        return receipt;
+    }
+    
+    /**
+     * @notice Formats market data as a JSON string for cross-chain messaging
+     * @param marketId The ID of the market
+     * @param outcome The outcome of the market
+     * @return A formatted string with market data
+     */
+    function formatMarketForMessage(uint256 marketId, int256 outcome) internal view returns (string memory) {
+        Market storage market = markets[marketId];
+        
+        // Create a JSON string with essential market data
+        return string(
+            abi.encodePacked(
+                '{"marketId":', uintToString(marketId),
+                ',"outcome":', intToString(outcome),
+                ',"resolved":true}'
+            )
+        );
+    }
+    
+    /**
+     * @notice Converts an int256 to a string
+     * @param value The int256 value to convert
+     * @return String representation of the int
+     */
+    function intToString(int256 value) internal pure returns (string memory) {
+        if (value < 0) {
+            return string(abi.encodePacked("-", uintToString(uint256(-value))));
+        }
+        return uintToString(uint256(value));
+    }
+    
+    /**
+     * @notice Converts a uint256 to a string
+     * @param value The uint256 value to convert
+     * @return String representation of the uint
+     */
+    function uintToString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+
+        uint256 temp = value;
+        uint256 digits;
+
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+
+        return string(buffer);
+    }
 }

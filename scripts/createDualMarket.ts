@@ -115,7 +115,7 @@ async function main() {
     const marketParams = {
       title: "Will Barca win the champions league?",
       description: "Price on Coinbase exchange",
-      options: ["No", "Yes"],
+      options: ["No", "Yes", "Draw"],
       expirationDate: Math.floor(Date.now() / 1000) + 360, // 24 hours from now
       verificationTime: 360, // 2 hours
       imageUrl: "https://example.com/eth.jpg",
