@@ -115,11 +115,23 @@ npx hardhat sendMessage --network sepolia-testnet --dst-network flow-testnet --m
 
 npx hardhat sendMessage --network flow-testnet --dst-network sepolia-testnet --message "Hello Omnichain World (sent from Flow)"
 
-npx hardhat verify --network sepolia-testnet 0x654536Bbec1BA8eC03d90d9C77e70efcBD80791A 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network sepolia-testnet 0x962abA481752e6736c2A4D9B864742Bbb54E7F1d 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
 contract, endpoint, deployer
-npx hardhat verify --network flow-testnet 0x2b5a4aE5490834a5F232fD00AE54BbF90425EF94 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network flow-testnet 0xf988383C6f361eE94Ae22abB088e9027AaedB73A 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
-npx hardhat verify --network sepolia-testnet --contract "contracts/SepoliaContract.sol:SepoliaContract" 0x654536Bbec1BA8eC03d90d9C77e70efcBD80791A 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network sepolia-testnet --contract "contracts/SepoliaContract.sol:SepoliaContract" 0x962abA481752e6736c2A4D9B864742Bbb54E7F1d 0x6EDCE65403992e310A62460808c4b910D972f10f 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
 
-npx hardhat verify --network flow-testnet --contract "contracts/FlowContract.sol:FlowContract" 0x2b5a4aE5490834a5F232fD00AE54BbF90425EF94 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+npx hardhat verify --network flow-testnet --contract "contracts/FlowContract.sol:FlowContract" 0xf988383C6f361eE94Ae22abB088e9027AaedB73A 0xcb566e3B6934Fa77258d68ea18E931fa75e1aaAa 0x504b635B7E22F8DF7d037cf31639811AE583E9f0
+
+# FLOW
+
+npx hardhat run scripts/debugCreateMarket.ts --network flow-testnet
+npx hardhat request-settlement --market-id 2 --dst-network sepolia --network flow-testnet
+
+# SEPOLIA
+
+npx hardhat run scripts/createDualMarket.ts
+npx hardhat run scripts/placeBet.ts
+npx hardhat run scripts/checkBets.ts
+MARKET_ID=1 npx hardhat run scripts/requestMarketSettlement.ts
